@@ -17,7 +17,7 @@ import java.util.Set;
 
 @Configuration
 @EnableStateMachine(name = "entityStateMachine")
-public class EntityStateMachine extends StateMachineConfigurerAdapter<String, String> {
+public class EntityStateMachineConfig extends StateMachineConfigurerAdapter<String, String> {
 
   @Autowired
   private IdleToActiveGuard idleToActiveGuard;
