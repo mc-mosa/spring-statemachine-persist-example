@@ -10,7 +10,7 @@ spring:
     validationQuery: SELECT 1
   jpa:
     # Show or not log for each sql query
-    show-sql: true
+    show-sql: false
     hibernate:
       # Hibernate ddl auto (create, create-drop, update): with "update" the database
       # schema will be automatically updated accordingly to java entities found in
