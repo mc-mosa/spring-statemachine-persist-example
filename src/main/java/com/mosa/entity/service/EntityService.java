@@ -47,6 +47,7 @@ public class EntityService {
       stateMachine = stateMachines.get(machineId);
     } else {
       stateMachine = entityStateMachineFactory.getStateMachine(machineId);
+      stateMachine.start();
       stateMachines.put(machineId, stateMachine);
     }
     return stateMachine.sendEvent(MessageBuilder.withPayload(event).setHeader(EntityConstants.entityHeader, entity).build());
