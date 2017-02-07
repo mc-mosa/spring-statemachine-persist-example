@@ -3,14 +3,18 @@ package com.mosa.entity.service;
 import com.google.common.collect.Lists;
 import com.mosa.entity.model.Entity;
 import com.mosa.entity.model.EntityEvents;
+import com.mosa.entity.model.EntityStates;
 import com.mosa.entity.repository.EntityRepository;
 import com.mosa.entity.utils.EntityConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.statemachine.recipes.persist.PersistStateMachineHandler;
+import org.springframework.statemachine.StateMachine;
+import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class EntityService {
@@ -19,7 +23,9 @@ public class EntityService {
   private EntityRepository entityRepository;
 
   @Autowired
-  private PersistStateMachineHandler persistStateMachineHandler;
+  private StateMachineFactory<EntityStates, EntityEvents> entityStateMachineFactory;
+
+  private Map<String, StateMachine<EntityStates, EntityEvents>> stateMachines = new HashMap<>();
 
   public List<Entity> getEntities() {
     return Lists.newArrayList(entityRepository.findAll());
@@ -35,9 +41,14 @@ public class EntityService {
 
   public Boolean updateState(Long id, EntityEvents event) {
     Entity entity = entityRepository.findOne(id);
-    return persistStateMachineHandler.handleEventWithState(
-        MessageBuilder.withPayload(event.name()).setHeader(EntityConstants.entityHeader, entity).build(),
-        entity.getState().name()
-    );
+    final String machineId = "entity" + entity.getId();
+    StateMachine<EntityStates, EntityEvents> stateMachine;
+    if (stateMachines.containsKey(machineId)) {
+      stateMachine = stateMachines.get(machineId);
+    } else {
+      stateMachine = entityStateMachineFactory.getStateMachine(machineId);
+      stateMachines.put(machineId, stateMachine);
+    }
+    return stateMachine.sendEvent(MessageBuilder.withPayload(event).setHeader(EntityConstants.entityHeader, entity).build());
   }
 }

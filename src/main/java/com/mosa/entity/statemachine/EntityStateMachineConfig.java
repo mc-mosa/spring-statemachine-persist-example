@@ -6,18 +6,16 @@ import com.mosa.entity.statemachine.actions.IdleToActiveAction;
 import com.mosa.entity.statemachine.guards.IdleToActiveGuard;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.statemachine.config.EnableStateMachine;
+import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineStateConfigurer;
 import org.springframework.statemachine.config.builders.StateMachineTransitionConfigurer;
 
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
 
 @Configuration
-@EnableStateMachine(name = "entityStateMachine")
-public class EntityStateMachineConfig extends StateMachineConfigurerAdapter<String, String> {
+@EnableStateMachineFactory(name = "entityStateMachineFactory")
+public class EntityStateMachineConfig extends StateMachineConfigurerAdapter<EntityStates, EntityEvents> {
 
   @Autowired
   private IdleToActiveGuard idleToActiveGuard;
@@ -26,31 +24,29 @@ public class EntityStateMachineConfig extends StateMachineConfigurerAdapter<Stri
   private IdleToActiveAction idleToActiveAction;
 
   @Override
-  public void configure(StateMachineStateConfigurer<String, String> states)
+  public void configure(StateMachineStateConfigurer<EntityStates, EntityEvents> states)
       throws Exception {
-    Set<String> stringStates = new HashSet<>();
-    EnumSet.allOf(EntityStates.class).forEach(entity -> stringStates.add(entity.name()));
     states.withStates()
-        .initial(EntityStates.IDLE.name())
-        .end(EntityStates.DELETED.name())
-        .states(stringStates);
+        .initial(EntityStates.IDLE)
+        .end(EntityStates.DELETED)
+        .states(EnumSet.allOf(EntityStates.class));
   }
 
   @Override
-  public void configure(StateMachineTransitionConfigurer<String, String> transitions)
+  public void configure(StateMachineTransitionConfigurer<EntityStates, EntityEvents> transitions)
       throws Exception {
     transitions.withExternal()
-        .source(EntityStates.IDLE.name()).target(EntityStates.ACTIVE.name())
-        .event(EntityEvents.ACTIVATE.name())
+        .source(EntityStates.IDLE).target(EntityStates.ACTIVE)
+        .event(EntityEvents.ACTIVATE)
         .guard(idleToActiveGuard).action(idleToActiveAction)
         .and().withExternal()
-        .source(EntityStates.ACTIVE.name()).target(EntityStates.IDLE.name())
-        .event(EntityEvents.IDLE.name())
+        .source(EntityStates.ACTIVE).target(EntityStates.IDLE)
+        .event(EntityEvents.IDLE)
         .and().withExternal()
-        .source(EntityStates.IDLE.name()).target(EntityStates.DELETED.name())
-        .event(EntityEvents.DELETE.name())
+        .source(EntityStates.IDLE).target(EntityStates.DELETED)
+        .event(EntityEvents.DELETE)
         .and().withExternal()
-        .source(EntityStates.ACTIVE.name()).target(EntityStates.DELETED.name())
-        .event(EntityEvents.DELETE.name());
+        .source(EntityStates.ACTIVE).target(EntityStates.DELETED)
+        .event(EntityEvents.DELETE);
   }
 }
